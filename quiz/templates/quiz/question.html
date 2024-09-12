@@ -1,0 +1,28 @@
+<!-- quiz/templates/quiz/question.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Question {{ question_number }}</title>
+</head>
+<body>
+    <h2>Question {{ question_number }}</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <p>{{ question.question_text }}</p>
+        {% if question.option_a %}
+            <label><input type="radio" name="option" value="A"> {{ question.option_a }}</label><br>
+        {% endif %}
+        {% if question.option_b %}
+            <label><input type="radio" name="option" value="B"> {{ question.option_b }}</label><br>
+        {% endif %}
+        {% if question.option_c %}
+            <label><input type="radio" name="option" value="C"> {{ question.option_c }}</label><br>
+        {% endif %}
+        {% if question.option_d %}
+            <label><input type="radio" name="option" value="D"> {{ question.option_d }}</label><br>
+        {% endif %}
+        <button type="submit">Next</button>
+    </form>
+</body>
+</html>

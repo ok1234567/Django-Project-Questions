@@ -1,0 +1,15 @@
+<!-- quiz/templates/quiz/start_quiz.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Start Quiz</title>
+</head>
+<body>
+    <h1>Welcome to the Futsal Quiz!</h1>
+    <p>Test your knowledge on the rules and principles of futsal.</p>
+    <form action="{% url 'question' 1 %}" method="get">
+        <button type="submit">Start Quiz</button>
+    </form>
+</body>
+</html>

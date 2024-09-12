@@ -1,0 +1,50 @@
+<!-- quiz/templates/quiz/results.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Results</title>
+</head>
+<body>
+    <h1>Quiz Results</h1>
+    <p>You answered {{ score }} out of {{ total }} questions correctly.</p>
+
+    {% if incorrect_questions %}
+        <h2>Incorrect Questions</h2>
+        <ul>
+            {% for question, selected, correct in incorrect_questions %}
+                <li>
+                    <strong>Question:</strong> {{ question.question_text }}<br>
+                    <strong>Your Answer:</strong> 
+                    {% if selected == 'A' %}
+                        {{ question.option_a }}
+                    {% elif selected == 'B' %}
+                        {{ question.option_b }}
+                    {% elif selected == 'C' %}
+                        {{ question.option_c }}
+                    {% elif selected == 'D' %}
+                        {{ question.option_d }}
+                    {% else %}
+                        No answer selected
+                    {% endif %}
+                    <br>
+                    <strong>Correct Answer:</strong> 
+                    {% if correct == 'A' %}
+                        {{ question.option_a }}
+                    {% elif correct == 'B' %}
+                        {{ question.option_b }}
+                    {% elif correct == 'C' %}
+                        {{ question.option_c }}
+                    {% elif correct == 'D' %}
+                        {{ question.option_d }}
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Congratulations! You answered all questions correctly!</p>
+    {% endif %}
+    
+    <a href="{% url 'start_quiz' %}">Try Again</a>
+</body>
+</html>
