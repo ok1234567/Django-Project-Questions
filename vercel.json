@@ -6,7 +6,7 @@
     }],
     "routes": [
         {
-            "src": "/.(.*)",
+            "src": "/(.*)",
             "dest": "quiz_project/wsgi.py"
         }
     ]
