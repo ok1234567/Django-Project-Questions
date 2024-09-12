@@ -4,29 +4,30 @@ from .models import Question
 import random
 
 def start_quiz(request):
+    # Seleciona 20 perguntas aleatórias do banco de dados
+    questions = list(Question.objects.all())
+    random.shuffle(questions)
+    selected_questions = questions[:20]
+
+    # Armazena os IDs das perguntas selecionadas na sessão
+    request.session['questions'] = [question.id for question in selected_questions]
+    request.session['answers'] = [None] * 20  # Resetar respostas do usuário
+
     return render(request, 'quiz/start_quiz.html')
 
 def question_view(request, question_number):
-    questions = request.session.get('questions')
-
-    if not questions:
-        # Seleciona 20 perguntas aleatórias
-        all_questions = list(Question.objects.all())
-        random.shuffle(all_questions)
-        questions = all_questions[:20]
-        request.session['questions'] = [question.id for question in questions]
-        request.session['answers'] = [None] * 20  # Para armazenar as respostas
-
-    if question_number > 20:
+    questions_ids = request.session.get('questions')
+    
+    if not questions_ids or question_number > len(questions_ids):
         return redirect('results')
 
-    question = Question.objects.get(id=request.session['questions'][question_number-1])
+    question = Question.objects.get(id=questions_ids[question_number - 1])
 
     if request.method == 'POST':
         selected_option = request.POST.get('option')
         if selected_option:
             answers = request.session['answers']
-            answers[question_number-1] = selected_option
+            answers[question_number - 1] = selected_option
             request.session['answers'] = answers
 
         # Vai para a próxima pergunta
