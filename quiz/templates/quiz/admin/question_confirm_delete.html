@@ -1,17 +1,21 @@
-<!-- quiz/templates/quiz/admin/question_confirm_delete.html -->
+<!-- templates/admin/question_confirm_delete.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Delete Question</title>
+    <link href="{% static 'admin/css/styles.css' %}" rel="stylesheet">
 </head>
 <body>
-    <h1>Delete Question</h1>
-    <p>Are you sure you want to delete the question: "{{ question.question_text }}"?</p>
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Confirm Delete</button>
-    </form>
-    <a href="{% url 'admin_question_list' %}">Cancel</a>
+    <div class="container mt-5">
+        <h1>Delete Question</h1>
+        <p>Are you sure you want to delete the question: "<strong>{{ question.question_text }}</strong>"?</p>
+        <form method="post" class="mb-3">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Confirm Delete</button>
+            <a href="{% url 'admin_question_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+    <script src="{% static 'admin/js/scripts.js' %}"></script>
 </body>
 </html>
