@@ -6,7 +6,7 @@ import random
 
 def question_list(request):
     questions = Question.objects.all()
-    return render(request, 'quiz/admin/question_list.html', {'questions': questions})
+    return render(request, 'admin/question_list.html', {'questions': questions})
 
 def question_add(request):
     if request.method == 'POST':
@@ -16,7 +16,7 @@ def question_add(request):
             return redirect('admin_question_list')
     else:
         form = QuestionForm()
-    return render(request, 'quiz/admin/question_form.html', {'form': form, 'action': 'Add'})
+    return render(request, 'admin/question_form.html', {'form': form, 'action': 'Add'})
 
 def question_edit(request, pk):
     question = get_object_or_404(Question, pk=pk)
@@ -27,14 +27,14 @@ def question_edit(request, pk):
             return redirect('admin_question_list')
     else:
         form = QuestionForm(instance=question)
-    return render(request, 'quiz/admin/question_form.html', {'form': form, 'action': 'Edit'})
+    return render(request, 'admin/question_form.html', {'form': form, 'action': 'Edit'})
 
 def question_delete(request, pk):
     question = get_object_or_404(Question, pk=pk)
     if request.method == 'POST':
         question.delete()
         return redirect('admin_question_list')
-    return render(request, 'quiz/admin/question_confirm_delete.html', {'question': question})
+    return render(request, 'admin/question_confirm_delete.html', {'question': question})
 
 def start_quiz(request):
     # Seleciona 20 perguntas aleatórias do banco de dados
