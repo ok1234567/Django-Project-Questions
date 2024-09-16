@@ -46,30 +46,17 @@ def start_quiz(request):
     request.session['questions'] = [question.id for question in selected_questions]
     request.session['answers'] = [None] * 20  # Resetar respostas do usuário
 
-    return render(request, 'quiz/start_quiz.html')
+    return redirect('question', question_number=1)
 
 def question_view(request, question_number):
     questions_ids = request.session.get('questions')
-    
-    if not questions_ids or question_number > len(questions_ids):
-        return redirect('results')
+    question = Question.objects.get(pk=questions_ids[question_number - 1])
 
-    question = Question.objects.get(id=questions_ids[question_number - 1])
-
-    if request.method == 'POST':
-        selected_option = request.POST.get('option')
-        if selected_option:
-            answers = request.session['answers']
-            answers[question_number - 1] = selected_option
-            request.session['answers'] = answers
-
-        # Vai para a próxima pergunta
-        if question_number < 20:
-            return redirect('question', question_number + 1)
-        else:
-            return redirect('results')
-
-    return render(request, 'quiz/question.html', {'question': question, 'question_number': question_number})
+    return render(request, 'quiz/quiz_question.html', {
+        'current_question_number': question_number,
+        'current_question': question,
+        'total_questions': len(questions_ids),
+    })
 
 def results_view(request):
     questions = [Question.objects.get(id=qid) for qid in request.session.get('questions', [])]
@@ -88,3 +75,41 @@ def results_view(request):
         'incorrect_questions': incorrect_questions,
         'total': len(questions)
     })
+
+def submit_quiz(request):
+    questions = Question.objects.all()[:20]  # Pegue as primeiras 20 perguntas
+    unanswered_questions = []
+    correct_count = 0
+    total_answered = 0  # Número de perguntas respondidas
+
+    for i, question in enumerate(questions):
+        selected_option = request.POST.get(f'question_{i + 1}')  # Obtenha a resposta selecionada
+        if not selected_option:
+            unanswered_questions.append(i + 1)  # Colete o número da pergunta não respondida
+            continue  # Pule para a próxima pergunta, se não for respondida
+
+        total_answered += 1  # Incrementa o número de perguntas respondidas
+        if selected_option == question.correct_option:
+            correct_count += 1  # Incrementa o contador de respostas corretas
+
+    # Cálculo do resultado
+    total_incorrect = total_answered - correct_count  # Apenas questões respondidas contam como erradas
+    result = (correct_count * 5) + (total_incorrect * -2)  # Fórmula ajustada
+
+    wrong_answers = []
+
+    for i, question in enumerate(questions):
+        selected_option = request.POST.get(f'question_{i + 1}')
+        if selected_option and selected_option != question.correct_option:
+            wrong_answers.append(question.id)
+
+    # Passar a lista de respostas erradas para o template
+    return render(request, 'quiz/results.html', {
+        'correct_count': correct_count,
+        'total_questions': len(questions),
+        'total_answered': total_answered,
+        'result': result,
+        'wrong_answers': wrong_answers,
+        'questions': questions,
+    })
+

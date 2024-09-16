@@ -1,5 +1,6 @@
 <!-- templates/admin/base_site.html -->
 {% extends "admin/base.html" %}
+{% load static %}  <!-- Add this line to load the static tag -->
 
 {% block title %}My Custom Admin{% endblock %}
 
@@ -32,7 +33,7 @@
 
         <!-- Main Content -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content">
-            {% block content %}{{ block.super }}{% endblock %}
+            {% block content2 %}{{ block.super }}{% endblock %}
         </main>
     </div>
 </div>

@@ -16,7 +16,7 @@ body {
 }
 
 .sidebar {
-    background-color: #343a40;
+    background-color: #dde2e7;
     color: #ffffff;
     height: 100vh;
     padding-top: 20px;
@@ -41,5 +41,3 @@ body {
     background-color: #fff;
     min-height: 100vh;
 }
-
-.table

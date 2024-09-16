@@ -8,42 +8,24 @@
 </head>
 <body>
     <h1>Quiz Results</h1>
-    <p>You answered {{ score }} out of {{ total }} questions correctly.</p>
+    <h2>Resultados do Teste</h2>
 
-    {% if incorrect_questions %}
-        <h2>Incorrect Questions</h2>
+    <p><strong>Respostas corretas:</strong> {{ correct_count }}</p>
+    <p><strong>Respostas respondidas:</strong> {{ total_answered }}</p>
+    <p><strong>Nota final:</strong> {{ result }}</p>
+
+    {% if total_answered != correct_count %}
+        <h3>Erros</h3>
+        <p>Você errou as seguintes perguntas:</p>
         <ul>
-            {% for question, selected, correct in incorrect_questions %}
-                <li>
-                    <strong>Question:</strong> {{ question.question_text }}<br>
-                    <strong>Your Answer:</strong> 
-                    {% if selected == 'A' %}
-                        {{ question.option_a }}
-                    {% elif selected == 'B' %}
-                        {{ question.option_b }}
-                    {% elif selected == 'C' %}
-                        {{ question.option_c }}
-                    {% elif selected == 'D' %}
-                        {{ question.option_d }}
-                    {% else %}
-                        No answer selected
-                    {% endif %}
-                    <br>
-                    <strong>Correct Answer:</strong> 
-                    {% if correct == 'A' %}
-                        {{ question.option_a }}
-                    {% elif correct == 'B' %}
-                        {{ question.option_b }}
-                    {% elif correct == 'C' %}
-                        {{ question.option_c }}
-                    {% elif correct == 'D' %}
-                        {{ question.option_d }}
-                    {% endif %}
-                </li>
+            {% for question in questions %}
+                {% if question.id in wrong_answers %}
+                    <li>{{ question.question_text }} - Resposta correta: {{ question.correct_option }}</li>
+                {% endif %}
             {% endfor %}
         </ul>
-    {% else %}
-        <p>Congratulations! You answered all questions correctly!</p>
+    {% elif correct_count == 20 %}
+        <p>Parabéns, todas as respostas estão corretas!</p>
     {% endif %}
     
     <a href="{% url 'start_quiz' %}">Try Again</a>
