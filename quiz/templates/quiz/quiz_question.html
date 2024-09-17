@@ -1,117 +1,137 @@
+{% load static %}  <!-- Add this line to load the static tag -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Questionário</title>
+    <title>Pergunta {{ question_number }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .question-navigation {
-            margin-bottom: 20px;
+        /* Customização básica do CSS para melhor visualização */
+        .navigation h3 {
+            margin-bottom: 10px;
+            font-weight: bold;
         }
-        .question-navigation button {
-            margin: 5px;
+
+        .pagination {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
         }
-        .question-container {
+
+        .pagination a {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        button.btn {
             margin-top: 20px;
-        }
-        .submit-btn {
-            margin-top: 30px;
         }
     </style>
 </head>
-<body class="container">
-
-    <h1>Questionário de Futsal</h1>
-    
-    <!-- Navegação entre as perguntas -->
-    <div class="question-navigation" data-total-questions="{{ total_questions }}" data-current-question="{{ current_question_number }}">
-        <h5>Navegar entre as questões:</h5>
-        <div>
-            {% number_range total_questions as rangeX %}
-            {% for i in rangeX %}
-                <button class="btn btn-outline-primary" onclick="navigateToQuestion('{{ i }}');">Pergunta {{ i }}</button>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Exibição da pergunta atual -->
-    <div class="question-container">
-        <h4>Pergunta {{ current_question_number }}:</h4>
-        <p>{{ current_question.question_text }}</p>
-
-        <form id="quiz-form" method="post" action="{% url 'submit_quiz' %}">
+<body>
+    <div class="container my-5">
+        <!-- Formulário de resposta -->
+        <form id="quizForm" method="POST" action="{% url 'quiz_question' question_number %}">
             {% csrf_token %}
-            <div>
-                <input type="radio" id="option_a" name="question_{{ current_question_number }}" value="A">
-                <label for="option_a">{{ current_question.option_a }}</label><br>
-
-                <input type="radio" id="option_b" name="question_{{ current_question_number }}" value="B">
-                <label for="option_b">{{ current_question.option_b }}</label><br>
-
-                {% if current_question.option_c %}
-                    <input type="radio" id="option_c" name="question_{{ current_question_number }}" value="C">
-                    <label for="option_c">{{ current_question.option_c }}</label><br>
-                {% endif %}
-
-                {% if current_question.option_d %}
-                    <input type="radio" id="option_d" name="question_{{ current_question_number }}" value="D">
-                    <label for="option_d">{{ current_question.option_d }}</label><br>
-                {% endif %}
-
-                {% if current_question.option_e %}
-                    <input type="radio" id="option_e" name="question_{{ current_question_number }}" value="E">
-                    <label for="option_e">{{ current_question.option_e }}</label><br>
-                {% endif %}
-            </div>
-
-            <!-- Botão de navegação -->
-            <div class="submit-btn">
-                <button type="button" class="btn btn-primary" onclick="nextQuestion();">Próxima Pergunta</button>
-            </div>
+            
+            <!-- Exibir a pergunta atual e suas opções -->
+            <h2>Pergunta {{ question_number }}:</h2>
+            <p>{{ question.question_text }}</p>
+            
+            <!-- Opção A -->
+            <label>
+                <input type="radio" name="answer_{{ question.id }}" value="A" 
+                {% if current_answer == 'A' %}checked{% endif %}>
+                {{ question.option_a }}
+            </label><br>
+        
+            <!-- Opção B -->
+            <label>
+                <input type="radio" name="answer_{{ question.id }}" value="B" 
+                {% if current_answer == 'B' %}checked{% endif %}>
+                {{ question.option_b }}
+            </label><br>
+        
+            <!-- Opção C (se existir) -->
+            {% if question.option_c %}
+                <label>
+                    <input type="radio" name="answer_{{ question.id }}" value="C" 
+                    {% if current_answer == 'C' %}checked{% endif %}>
+                    {{ question.option_c }}
+                </label><br>
+            {% endif %}
+        
+            <!-- Opção D (se existir) -->
+            {% if question.option_d %}
+                <label>
+                    <input type="radio" name="answer_{{ question.id }}" value="D" 
+                    {% if current_answer == 'D' %}checked{% endif %}>
+                    {{ question.option_d }}
+                </label><br>
+            {% endif %}
+        
+            <!-- Opção E (se existir) -->
+            {% if question.option_e %}
+                <label>
+                    <input type="radio" name="answer_{{ question.id }}" value="E" 
+                    {% if current_answer == 'E' %}checked{% endif %}>
+                    {{ question.option_e }}
+                </label><br>
+            {% endif %}
+        
+            <!-- Botão para passar para a próxima pergunta -->
+            <button type="submit" class="btn btn-primary">Guardar resposta/Próxima</button><br>
+            {% if question_number == total_questions %}
+                <button type="submit" formaction="{% url 'submit_quiz' %}" class="btn btn-success">Submeter Quiz (antes de submeter clicar em Guardar Resposta) </button>
+            {% endif %}
         </form>
+
+        <!-- Navegação entre perguntas -->
+        <div class="navigation mt-4">
+            <h3>Navegue pelas perguntas:</h3>
+            <div class="pagination container">
+                <div class="row">
+                    {% number_range 20 as rangeX %}
+                    {% for i in rangeX %}
+                        <div class="col-md-2 col-6 my-2">
+                            <!-- Submeter o formulário e redirecionar para a pergunta ao clicar -->
+                            <a href="javascript:void(0);" onclick="navigateToQuestion('{{ i }}');" 
+                               class="btn {% if i == question_number %}btn-secondary{% else %}btn-outline-primary{% endif %} w-100">
+                                {{ i }}
+                            </a>
+                        </div>
+        
+                        <!-- Criar uma nova linha a cada 5 perguntas -->
+                        {% if forloop.counter|divisibleby:5 %}
+                            </div><div class="row">
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerta se houver perguntas não respondidas (usado em outra página, via modal ou redirecionamento) -->
+        <script>
+            function navigateToQuestion(questionNumber) {
+                // Cria um campo oculto para salvar a navegação
+                var form = document.getElementById('quizForm');
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'next_question';
+                input.value = questionNumber;
+
+                // Adiciona o campo ao formulário e submete
+                form.appendChild(input);
+                form.submit();
+            }
+        </script>
     </div>
 
-    <!-- Botão para submeter o questionário -->
-    <form id="submit-form" method="post" action="{% url 'submit_quiz' %}">
-        {% csrf_token %}
-        <button type="button" class="btn btn-success" onclick="submitQuiz();">Submeter Questionário</button>
-    </form>
-
-    <script>
-        // Função para navegar para a pergunta selecionada
-        function navigateToQuestion(questionNumber) {
-            const form = document.getElementById('quiz-form');
-            form.action = `/question/${questionNumber}/`;  // Redireciona para a pergunta selecionada
-            form.submit();
-        }
-
-        // Função para ir para a próxima pergunta
-        function nextQuestion() {
-            const totalQuestions = parseInt(document.querySelector('.question-navigation').getAttribute('data-total-questions'));
-            const currentQuestion = parseInt(document.querySelector('.question-navigation').getAttribute('data-current-question'));
-
-            if (currentQuestion < totalQuestions) {
-                navigateToQuestion(currentQuestion + 1);  // Navega para a próxima pergunta
-            }
-        }
-
-        // Função para submeter o questionário
-        function submitQuiz() {
-            const totalQuestions = parseInt(document.querySelector('.question-navigation').getAttribute('data-total-questions'));
-            const questionsAnswered = document.querySelectorAll('input[type="radio"]:checked').length;  // Verifica se todas foram respondidas
-            
-            if (questionsAnswered < totalQuestions) {
-                const confirmation = confirm(`Faltam responder a ${totalQuestions - questionsAnswered} questões. Tem a certeza que deseja submeter?`);
-                if (!confirmation) {
-                    return;  // Cancela a submissão se o usuário preferir completar
-                }
-            }
-
-            // Submete o questionário
-            document.getElementById('submit-form').submit();
-        }
-    </script>
-
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+

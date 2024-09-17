@@ -1,115 +1,102 @@
-# quiz/views.py
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from .models import Question
-from .forms import QuestionForm
+from django.http import HttpResponseRedirect
 import random
-
-def question_list(request):
-    questions = Question.objects.all()
-    return render(request, 'admin/question_list.html', {'questions': questions})
-
-def question_add(request):
-    if request.method == 'POST':
-        form = QuestionForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('admin_question_list')
-    else:
-        form = QuestionForm()
-    return render(request, 'admin/question_form.html', {'form': form, 'action': 'Add'})
-
-def question_edit(request, pk):
-    question = get_object_or_404(Question, pk=pk)
-    if request.method == 'POST':
-        form = QuestionForm(request.POST, instance=question)
-        if form.is_valid():
-            form.save()
-            return redirect('admin_question_list')
-    else:
-        form = QuestionForm(instance=question)
-    return render(request, 'admin/question_form.html', {'form': form, 'action': 'Edit'})
-
-def question_delete(request, pk):
-    question = get_object_or_404(Question, pk=pk)
-    if request.method == 'POST':
-        question.delete()
-        return redirect('admin_question_list')
-    return render(request, 'admin/question_confirm_delete.html', {'question': question})
+import json
 
 def start_quiz(request):
-    # Seleciona 20 perguntas aleatórias do banco de dados
+    # Selecionar 20 perguntas aleatórias
     questions = list(Question.objects.all())
     random.shuffle(questions)
     selected_questions = questions[:20]
-
-    # Armazena os IDs das perguntas selecionadas na sessão
+    
+    # Armazenar as perguntas na sessão
     request.session['questions'] = [question.id for question in selected_questions]
-    request.session['answers'] = [None] * 20  # Resetar respostas do usuário
+    request.session['answers'] = {}  # Respostas vazias no início
+    
+    return render(request, 'quiz/quiz_start.html')
 
-    return redirect('question', question_number=1)
+def quiz_question(request, question_number):
+    # Recupera todas as perguntas do quiz armazenadas na sessão
+    question_ids = request.session.get('questions', [])
+    questions = Question.objects.filter(id__in=question_ids)
+    question = questions[question_number - 1]  # Pega a pergunta com base no número atual
 
-def question_view(request, question_number):
-    questions_ids = request.session.get('questions')
-    question = Question.objects.get(pk=questions_ids[question_number - 1])
+    # Armazena a resposta enviada (caso o formulário tenha sido submetido)
+    if request.method == 'POST':
+        selected_answer = request.POST.get(f'answer_{question.id}')
+        next_question = request.POST.get('next_question')  # Verifica se há navegação
+
+        # Salva a resposta na sessão
+        if selected_answer:
+            if 'answers' not in request.session:
+                request.session['answers'] = {}
+            request.session['answers'][str(question.id)] = selected_answer
+            request.session.modified = True
+
+        # Se o usuário está navegando para outra pergunta
+        if next_question:
+            return redirect('quiz_question', question_number=next_question)
+        
+        # Se não houver navegação, redirecionar para a próxima pergunta
+        if question_number < len(questions):
+            return redirect('quiz_question', question_number=question_number + 1)
+
+    # Carrega a resposta já dada (se existir) para a pergunta atual
+    current_answer = request.session.get('answers', {}).get(str(question.id))
 
     return render(request, 'quiz/quiz_question.html', {
-        'current_question_number': question_number,
-        'current_question': question,
-        'total_questions': len(questions_ids),
-    })
-
-def results_view(request):
-    questions = [Question.objects.get(id=qid) for qid in request.session.get('questions', [])]
-    answers = request.session.get('answers', [])
-
-    incorrect_questions = []
-    score = 0
-    for question, answer in zip(questions, answers):
-        if question.correct_option == answer:
-            score += 1
-        else:
-            incorrect_questions.append((question, answer, question.correct_option))
-
-    return render(request, 'quiz/results.html', {
-        'score': score,
-        'incorrect_questions': incorrect_questions,
-        'total': len(questions)
+        'question': question,
+        'question_number': question_number,
+        'total_questions': len(questions),
+        'current_answer': current_answer,  # Passa a resposta atual (se houver)
+        'questionsIds' : [questionX.id for questionX in questions]
     })
 
 def submit_quiz(request):
-    questions = Question.objects.all()[:20]  # Pegue as primeiras 20 perguntas
-    unanswered_questions = []
+    questions = Question.objects.filter(id__in=request.session.get('questions', []))
+    answers = request.session.get('answers', {})
+
     correct_count = 0
-    total_answered = 0  # Número de perguntas respondidas
+    incorrect_count = 0
+    unanswered_count = 0
+    results = []
 
-    for i, question in enumerate(questions):
-        selected_option = request.POST.get(f'question_{i + 1}')  # Obtenha a resposta selecionada
-        if not selected_option:
-            unanswered_questions.append(i + 1)  # Colete o número da pergunta não respondida
-            continue  # Pule para a próxima pergunta, se não for respondida
+    for question in questions:
+        selected_answer = answers.get(str(question.id))
 
-        total_answered += 1  # Incrementa o número de perguntas respondidas
-        if selected_option == question.correct_option:
-            correct_count += 1  # Incrementa o contador de respostas corretas
+        if not selected_answer:
+            unanswered_count += 1
+            results.append({
+                'question': question,
+                'selected': None,
+                'correct': question.correct_option,
+            })
+        elif selected_answer == question.correct_option:
+            correct_count += 1
+            results.append({
+                'question': question,
+                'selected': selected_answer,
+                'correct': question.correct_option,
+                'is_correct': True
+            })
+        else:
+            incorrect_count += 1
+            results.append({
+                'question': question,
+                'selected': selected_answer,
+                'correct': question.correct_option,
+                'is_correct': False
+            })
 
     # Cálculo do resultado
-    total_incorrect = total_answered - correct_count  # Apenas questões respondidas contam como erradas
-    result = (correct_count * 5) + (total_incorrect * -2)  # Fórmula ajustada
+    final_score = (correct_count * 5) - (incorrect_count * 2)
 
-    wrong_answers = []
-
-    for i, question in enumerate(questions):
-        selected_option = request.POST.get(f'question_{i + 1}')
-        if selected_option and selected_option != question.correct_option:
-            wrong_answers.append(question.id)
-
-    # Passar a lista de respostas erradas para o template
-    return render(request, 'quiz/results.html', {
+    # Enviar o resultado final
+    return render(request, 'quiz/quiz_results.html', {
         'correct_count': correct_count,
-        'total_questions': len(questions),
-        'total_answered': total_answered,
-        'result': result,
-        'wrong_answers': wrong_answers,
-        'questions': questions,
+        'incorrect_count': incorrect_count,
+        'unanswered_count': unanswered_count,
+        'final_score': final_score,
+        'results': results,
     })
-

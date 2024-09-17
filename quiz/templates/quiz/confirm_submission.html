@@ -1,9 +1,0 @@
-<h2>{{ message }}</h2>
-<p>Estas são as questões que faltam responder: {{ unanswered_questions|join:", " }}</p>
-
-<form action="{% url 'submit_quiz' %}" method="post">
-    {% csrf_token %}
-    <button type="submit">Confirmar Submissão</button>
-</form>
-
-<a href="{% url 'start_quiz' %}">Voltar para o questionário</a>
